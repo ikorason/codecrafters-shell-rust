@@ -17,6 +17,13 @@ fn main() {
             cmd if cmd.starts_with("echo ") => {
                 println!("{}", &cmd[5..]);
             }
+            cmd if cmd.starts_with("type ") => {
+                let command = &cmd[5..];
+                match command {
+                    "echo" | "exit" | "type" => println!("{} is a shell builtin", command),
+                    _ => println!("{}: not found", command),
+                }
+            }
             _ => {
                 println!("{}: command not found", input);
             }
