@@ -12,11 +12,15 @@ fn main() {
 
         let input = input.trim();
 
-        if input == "exit 0" {
-            std::process::exit(0);
+        match input {
+            "exit 0" => std::process::exit(0),
+            cmd if cmd.starts_with("echo ") => {
+                println!("{}", &cmd[5..]);
+            }
+            _ => {
+                println!("{}: command not found", input);
+            }
         }
-
-        println!("{}: command not found", input);
 
         if ret == 0 {
             // EOF reached, exit the loop
