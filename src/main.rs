@@ -1,4 +1,8 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    os::unix::fs::PermissionsExt,
+    path::PathBuf,
+};
 
 fn main() {
     loop {
@@ -21,7 +25,32 @@ fn main() {
                 let command = &cmd[5..];
                 match command {
                     "echo" | "exit" | "type" => println!("{} is a shell builtin", command),
-                    _ => println!("{}: not found", command),
+                    _ => match std::env::var("PATH") {
+                        Ok(path_str) => {
+                            let mut found = false;
+
+                            for dir in path_str.split(":") {
+                                let mut path = PathBuf::from(dir);
+                                path.push(command);
+
+                                if path.exists()
+                                    && path.metadata().unwrap().permissions().mode() & 0o111 != 0
+                                {
+                                    println!("{} is {}", command, path.display());
+                                    found = true;
+                                }
+
+                                if found {
+                                    break;
+                                }
+                            }
+
+                            if !found {
+                                println!("{}: not found", command);
+                            }
+                        }
+                        Err(e) => todo!(),
+                    },
                 }
             }
             _ => {
