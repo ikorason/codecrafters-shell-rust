@@ -25,7 +25,7 @@ fn main() {
             cmd if cmd.starts_with("type ") => {
                 let command = &cmd[5..];
                 match command {
-                    "echo" | "exit" | "type" => println!("{} is a shell builtin", command),
+                    "echo" | "exit" | "type" | "pwd" => println!("{} is a shell builtin", command),
                     _ => match std::env::var("PATH") {
                         Ok(path_str) => {
                             let mut found = false;
@@ -50,10 +50,16 @@ fn main() {
                                 println!("{}: not found", command);
                             }
                         }
-                        Err(e) => todo!(),
+                        Err(_e) => todo!(),
                     },
                 }
             }
+            "pwd" => match std::env::current_dir() {
+                Ok(current_dir) => {
+                    println!("{}", current_dir.display());
+                }
+                Err(_e) => todo!(),
+            },
             _ => {
                 let parts: Vec<&str> = input.split(' ').collect();
                 let command_name = parts[0];
