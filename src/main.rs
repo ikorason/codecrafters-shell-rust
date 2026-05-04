@@ -57,10 +57,13 @@ fn main() {
             _ => {
                 let parts: Vec<&str> = input.split(' ').collect();
                 let command_name = parts[0];
-                Command::new(command_name)
+                if Command::new(command_name)
                     .args(&parts[1..])
                     .status()
-                    .unwrap();
+                    .is_err()
+                {
+                    println!("{}: command not found", command_name);
+                }
             }
         }
 
