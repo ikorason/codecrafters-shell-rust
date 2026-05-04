@@ -2,6 +2,7 @@ use std::{
     io::{self, Write},
     os::unix::fs::PermissionsExt,
     path::PathBuf,
+    process::Command,
 };
 
 fn main() {
@@ -54,7 +55,12 @@ fn main() {
                 }
             }
             _ => {
-                println!("{}: command not found", input);
+                let parts: Vec<&str> = input.split(' ').collect();
+                let command_name = parts[0];
+                Command::new(command_name)
+                    .args(&parts[1..])
+                    .status()
+                    .unwrap();
             }
         }
 
