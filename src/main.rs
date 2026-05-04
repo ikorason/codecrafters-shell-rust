@@ -17,7 +17,7 @@ fn main() {
         let input = input.trim();
 
         match input {
-            "exit 0" => std::process::exit(0),
+            "exit 0" | "exit" => std::process::exit(0),
             cmd if cmd.starts_with("echo ") => {
                 println!("{}", &cmd[5..]);
             }
