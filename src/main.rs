@@ -20,12 +20,15 @@ fn main() {
         match input {
             "exit 0" | "exit" => std::process::exit(0),
             cmd if cmd.starts_with("echo ") => {
-                println!("{}", &cmd[5..]);
+                let command = &cmd[5..];
+                println!("{}", command);
             }
             cmd if cmd.starts_with("type ") => {
                 let command = &cmd[5..];
                 match command {
-                    "echo" | "exit" | "type" | "pwd" => println!("{} is a shell builtin", command),
+                    "echo" | "exit" | "type" | "pwd" | "cd" => {
+                        println!("{} is a shell builtin", command)
+                    }
                     _ => match std::env::var("PATH") {
                         Ok(path_str) => {
                             let mut found = false;
@@ -60,6 +63,14 @@ fn main() {
                 }
                 Err(_e) => todo!(),
             },
+            cmd if cmd.starts_with("cd ") => {
+                let command = &cmd[3..];
+                let write_dir = std::env::set_current_dir(command);
+                match write_dir {
+                    Ok(f) => (),
+                    Err(e) => println!("cd: {command}: No such file or directory"),
+                }
+            }
             _ => {
                 let parts: Vec<&str> = input.split(' ').collect();
                 let command_name = parts[0];
