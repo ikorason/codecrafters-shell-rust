@@ -1,4 +1,5 @@
 use std::{
+    env::set_current_dir,
     io::{self, Write},
     os::unix::fs::PermissionsExt,
     path::PathBuf,
@@ -64,11 +65,18 @@ fn main() {
                 Err(_e) => todo!(),
             },
             cmd if cmd.starts_with("cd ") => {
-                let command = &cmd[3..];
-                let write_dir = std::env::set_current_dir(command);
-                match write_dir {
-                    Ok(f) => (),
-                    Err(e) => println!("cd: {command}: No such file or directory"),
+                let path = &cmd[3..];
+
+                let target = if path == "~" {
+                    std::env::var("HOME").unwrap_or_default()
+                } else {
+                    path.to_string()
+                };
+
+                let write_dir = std::env::set_current_dir(target);
+
+                if let Err(_e) = write_dir {
+                    println!("cd: {path}: No such file or directory");
                 }
             }
             _ => {
