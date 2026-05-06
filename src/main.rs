@@ -1,10 +1,31 @@
 use std::{
-    env::set_current_dir,
     io::{self, Write},
     os::unix::fs::PermissionsExt,
     path::PathBuf,
     process::Command,
 };
+
+fn find_in_path(cmd: &str) -> Option<PathBuf> {
+    match std::env::var("PATH") {
+        Ok(path_str) => {
+            for dir in path_str.split(":") {
+                let mut path = PathBuf::from(dir);
+                path.push(cmd);
+
+                if path.exists() && path.metadata().unwrap().permissions().mode() & 0o111 != 0 {
+                    return Some(path);
+                }
+            }
+
+            None
+        }
+        Err(_e) => todo!(),
+    }
+}
+
+fn is_builtin(cmd: &str) -> bool {
+    matches!(cmd, "echo" | "exit" | "type" | "pwd" | "cd")
+}
 
 fn main() {
     loop {
@@ -25,37 +46,13 @@ fn main() {
                 println!("{}", command);
             }
             cmd if cmd.starts_with("type ") => {
-                let command = &cmd[5..];
-                match command {
-                    "echo" | "exit" | "type" | "pwd" | "cd" => {
-                        println!("{} is a shell builtin", command)
-                    }
-                    _ => match std::env::var("PATH") {
-                        Ok(path_str) => {
-                            let mut found = false;
-
-                            for dir in path_str.split(":") {
-                                let mut path = PathBuf::from(dir);
-                                path.push(command);
-
-                                if path.exists()
-                                    && path.metadata().unwrap().permissions().mode() & 0o111 != 0
-                                {
-                                    println!("{} is {}", command, path.display());
-                                    found = true;
-                                }
-
-                                if found {
-                                    break;
-                                }
-                            }
-
-                            if !found {
-                                println!("{}: not found", command);
-                            }
-                        }
-                        Err(_e) => todo!(),
-                    },
+                let cmd = &cmd[5..];
+                if is_builtin(cmd) {
+                    println!("{} is a shell builtin", cmd)
+                } else if let Some(path) = find_in_path(cmd) {
+                    println!("{} is {}", cmd, path.display())
+                } else {
+                    println!("{}: not found", cmd)
                 }
             }
             "pwd" => match std::env::current_dir() {
