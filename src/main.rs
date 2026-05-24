@@ -27,6 +27,38 @@ fn is_builtin(cmd: &str) -> bool {
     matches!(cmd, "echo" | "exit" | "type" | "pwd" | "cd")
 }
 
+fn parse_args(input: &str) -> Vec<String> {
+    let mut ret = vec![];
+
+    let mut current = String::new();
+
+    let mut in_quotes = false;
+
+    for c in input.chars() {
+        if c == '\'' {
+            in_quotes = !in_quotes;
+            continue;
+        }
+
+        if c.is_whitespace() && !in_quotes {
+            if !current.is_empty() {
+                ret.push(current.clone());
+            }
+
+            current.clear();
+            continue;
+        }
+
+        current.push(c);
+    }
+
+    if !current.is_empty() {
+        ret.push(current);
+    }
+
+    ret
+}
+
 fn main() {
     loop {
         print!("$ ");
@@ -42,8 +74,9 @@ fn main() {
         match input {
             "exit 0" | "exit" => std::process::exit(0),
             cmd if cmd.starts_with("echo ") => {
-                let command = &cmd[5..];
-                println!("{}", command);
+                let args = &input[5..];
+                let str = parse_args(args);
+                println!("{}", str.join(" "));
             }
             cmd if cmd.starts_with("type ") => {
                 let cmd = &cmd[5..];
@@ -77,14 +110,9 @@ fn main() {
                 }
             }
             _ => {
-                let parts: Vec<&str> = input.split(' ').collect();
-                let command_name = parts[0];
-                if Command::new(command_name)
-                    .args(&parts[1..])
-                    .status()
-                    .is_err()
-                {
-                    println!("{}: command not found", command_name);
+                let parts = parse_args(input);
+                if Command::new(&parts[0]).args(&parts[1..]).status().is_err() {
+                    println!("{}: command not found", &parts[0]);
                 }
             }
         }
